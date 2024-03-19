@@ -1,0 +1,6 @@
+name: bblayout
+dependencies:
+  - pip
+  - python=3
+  - pip:
+      - svg.py
