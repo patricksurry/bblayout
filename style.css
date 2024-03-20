@@ -1,0 +1,54 @@
+text {
+    stroke: none;
+    fill: #333;
+    font-size: 0.6px;
+    font-family: Sans, Arial;
+    alignment-baseline: central;
+}
+text.rhs {
+    text-anchor: end;
+}
+.component {
+    fill: none;
+    stroke: grey;
+    stroke-width: 0.05;
+}
+.component.dip {
+    fill: #eee;
+}
+.polarity-mark {
+    fill: #ccc;
+    stroke: none;
+}
+.breadboard .groove {
+    fill: #eee;
+}
+.breadboard text {
+    font-size: 0.6px;
+    fill: #999;
+    text-anchor: middle;
+}
+.breadboardrail line {
+    stroke-width: 0.1;
+}
+.breadboardrail line.P {
+    stroke: red;
+}
+.breadboardrail line.N {
+    stroke: blue;
+}
+.breadboardrail text {
+    font-size: 1.5px;
+    text-anchor: middle;
+}
+.breadboardrail text.P {
+    fill: red;
+}
+.breadboardrail text.N {
+    fill: blue;
+}
+.wire {
+    stroke: green;
+    stroke-width: 0.3;
+    stroke-linecap: round;
+}
