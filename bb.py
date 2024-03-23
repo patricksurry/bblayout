@@ -1,7 +1,7 @@
 import svg
-from component import Component, Point
-import breadboard
-import dip
+from dip import DIP
+from sip import SIP
+from breadboard import BreadboardLayout, Wire
 
 
 #TODO
@@ -9,43 +9,51 @@ import dip
 /xx => _xx in pinmap;  what about 2Y0?
 .<pin> and subtraction for wires
 cpu.RST - R1 - GND  # R1 subtraction could be non-commutative to spec both ends
+
+slicing via['PB0':'PB7']  or via.PB0:via.PB7
 """
 
+layout = BreadboardLayout('|=|=||=|=|')
 
-layout = breadboard.layout('|=|=||=|=|')
+power = SIP.new('power')
+via = DIP.new('W65C22')
+cpu = DIP.new('W65C02')
+ram = DIP.new('62256')
+rom = DIP.new('28C256')
+nand = DIP.new('74LS00')
+ff = DIP.new('74LS74')
+demux = DIP.new('74LS139')
+sdshft = DIP.new('74LS595')
+kbshft = DIP.new('74LS595')
 
-via = Component.new('W65C22') @ layout.BB2.D23.at
-cpu = Component.new('W65C02') @ layout.BB4.C8.at
-ram = Component.new('62256')  @ layout.BB4.C32.at
-rom = Component.new('28C256') @ layout.BB4.C49.at
-nand = Component.new('74LS00') @ layout.BB3.E6.at
-ff = Component.new('74LS74') @ layout.BB2.E6.at
-demux = Component.new('74LS139') @ layout.BB2.E14.at
-sdshft = Component.new('74LS595') @ layout.BB1.E15.at
-kbshft = Component.new('74LS595') @ layout.BB1.E33.at
-pt, extent = layout.viewbox()
-
-canvas = svg.SVG(
-    width=extent.x*10, height=extent.y*10,
-    viewBox=svg.ViewBoxSpec(pt.x, pt.y, extent.x, extent.y),
-    elements=[
-        svg.Style(text=open('style.css').read()),
-        layout.draw(),
-        cpu.draw(),
-        via.draw(),
-        ram.draw(),
-        rom.draw(),
-        nand.draw(),
-        ff.draw(),
-        demux.draw(),
-        sdshft.draw(),
-        kbshft.draw(),
-        (layout.BB1.J17 - layout.BB2.C32).draw(),
-        svg.Line(x1=cpu.GND.at.x, y1=cpu.GND.at.y, x2=via.GND.at.x, y2=via.GND.at.y, class_=['wire']),
-    ]
+layout.place(
+    power @ layout.BBR1.P2,
+    via @ layout.BB2.D23,
+    cpu @ layout.BB4.C8,
+    ram @ layout.BB4.C32,
+    rom @ layout.BB4.C49,
+    nand @ layout.BB3.E6,
+    ff @ layout.BB2.E6,
+    demux @ layout.BB2.E14,
+    sdshft @ layout.BB1.E15,
+    kbshft @ layout.BB1.E33,
 )
-open('bb.svg', 'w').write(str(canvas))
 
+layout.wiring(
+    cpu.VDD - power.VDD,
+    via.VDD - power.VDD,
+    color='red'
+)
+layout.wiring(
+    cpu.GND - power.GND,
+)
+layout.wiring(
+    *Wire.zip(cpu['D0':], via['D0':]),
+    color='blue',
+#    loop=True,
+)
+
+layout.to_svg('bb.svg')
 
 """
 DIP({

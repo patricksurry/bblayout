@@ -1,5 +1,8 @@
 import svg
-from component import Component, Point, Pin, pin_symbol
+from typing import cast, overload
+
+from component import Component
+from connect import Point, Connectable, Pin
 
 
 class DIP(Component):
@@ -9,8 +12,6 @@ class DIP(Component):
             width: int,
             picture: str,
             padding=Point(0, 0.5),
-            at=Point(),
-            rotated=False,
             description: str='',
             tags: list[str] = []
     ):
@@ -18,18 +19,33 @@ class DIP(Component):
             line.strip().split()
             for line in picture.strip().splitlines()
         ]
-        super().__init__(name,  Point(width, len(pairs)-1), padding, at=at, rotated=rotated, description=description)
+        super().__init__(name,  Point(width, len(pairs)-1), padding, description=description)
         names = [left for (left, _) in pairs] + [right for (_, right) in reversed(pairs)]
-        self.pinmap = {
-            name: Pin(i+1, name, Point(
+        self.connectables = {
+            name: Pin(self, name, Point(
                 0 if i <= self.shape.y else self.shape.x,
                 i if i <= self.shape.y else 2*self.shape.y + 1 - i
-            ))
+            ), i+1)
             for i, name in enumerate(names)
         }
 
-    def __getattr__(self, name: str):
-        return self.pinmap[name] @ self.at
+    @overload
+    def __getitem__(self, v: str) -> Connectable:
+        ...
+    @overload
+    def __getitem__(self, v: int) -> Connectable:
+        ...
+    @overload
+    def __getitem__(self, v: slice) -> list[Connectable]:
+        ...
+    def __getitem__(self, v):
+        if isinstance(v, int):
+            return next(pin for pin in self.connectables.values() if cast(Pin, pin).number==v)
+        else:
+            return super().__getitem__(v)
+
+    def default_connectable(self):
+        return self[1 if self.rotation != 180 else self.shape.y+2]
 
     def draw(self):
         g = super().draw()
@@ -43,17 +59,17 @@ class DIP(Component):
         g.elements += [
             svg.G(
                 class_='pin',
-                transform=[svg.Translate(pin.at.x, pin.at.y)],
+                transform=[svg.Translate(pin.at_local.x, pin.at_local.y)],
                 elements=[
-                    svg.Rect(x=0 if pin.at.x else -0.1, y=-0.2, width=0.1, height=0.4),
+                    svg.Rect(x=0 if pin.at_local.x else -0.1, y=-0.2, width=0.1, height=0.4),
                     svg.Text(
-                        text=pin_symbol(pin.name),
-                        class_=['rhs' if pin.at.x else 'lhs'],
-                        dx=-0.2 if pin.at.x else 0.2,
+                        text=cast(Pin, pin).symbol,
+                        class_=['rhs' if pin.at_local.x else 'lhs'],
+                        dx=-0.2 if pin.at_local.x else 0.2,
                     )
                 ]
             )
-            for pin in self.pinmap.values()
+            for pin in self.connectables.values()
         ]
         return g
 

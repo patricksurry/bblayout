@@ -48,7 +48,6 @@ text.rhs {
     fill: blue;
 }
 .wire {
-    stroke: green;
     stroke-width: 0.3;
     stroke-linecap: round;
 }
